@@ -1,0 +1,38 @@
+<div class="jumbotron">
+    <h2> <b>Pomodoros</b> </h2>
+    <h2> <b>start working on a new pomodoro</b> </h2>
+    <form action="/pomodoros" method="POST">
+        <input type="text" size="60" name="startedAt">startedAt <br>
+        <input type="text" size="60" name="goal">goal <br>
+        <input type="text" size="60" name="result">result <br>
+        <input type="text" size="60" name="completedAt">completedAt <br>
+        <input type="submit" value="press when pomodoro is completed (about 30 minutes)">
+    </form>
+    <table class="table table-bordered table-striped">
+        <thead>
+            <th>goal</th>
+            <th>result</th>
+            <th>started</th>
+            <th>completed</th>
+        </thead>
+        <tbody>
+            <% pomodoros.forEach(element=> { %>
+                <tr>
+                    <td>
+                        <%=element.goal%>
+                    </td>
+                    <td>
+                        <%=element.result%>
+                    </td>
+                    <td>
+                        <%=element.startedAt%>
+                    </td>
+                    <td>
+                        <%=element.completedAt%>
+                    </td>
+                </tr>
+                <% }); %>
+        </tbody>
+    </table>
+
+</div>

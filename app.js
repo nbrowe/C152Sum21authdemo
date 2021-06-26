@@ -9,15 +9,15 @@ const layouts = require("express-ejs-layouts");
 
 
 
-const mongoose = require( 'mongoose' );
+const mongoose = require('mongoose');
 //mongoose.connect( `mongodb+srv://${auth.atlasAuth.username}:${auth.atlasAuth.password}@cluster0-yjamu.mongodb.net/authdemo?retryWrites=true&w=majority`);
-mongoose.connect( 'mongodb://localhost/authDemo');
+mongoose.connect('mongodb://localhost/authDemo');
 //const mongoDB_URI = process.env.MONGODB_URI
 //mongoose.connect(mongoDB_URI)
 
 const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
-db.once('open', function() {
+db.once('open', function () {
   console.log("we are connected!!!")
 });
 
@@ -56,99 +56,123 @@ app.use(loggingRouter);
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
-app.use('/todo',toDoRouter);
-app.use('/todoAjax',toDoAjaxRouter);
+app.use('/todo', toDoRouter);
+app.use('/todoAjax', toDoAjaxRouter);
 
-app.use('/im',indMinorRouter);
+app.use('/im', indMinorRouter);
 
-const myLogger = (req,res,next) => {
+const myLogger = (req, res, next) => {
   console.log('inside a route!')
   next()
 }
+//quiz 3 ################
+const Pomodoro = require('./models/Pomodoro')
+app.get('/pomodoros',
+  isLoggedIn,
+  async (req, res, next) => {
+    res.locals.pomodoros = await Pomodoro.find({ userId: req.user._id })
+    res.render('pomodoros');
+  });
+
+app.post('/pomodoros',
+  isLoggedIn,
+  async (req, res, next) => {
+    let newPom = new Pomodoro({
+      startedAt: req.body.startedAt,
+      completedAt: req.body.completedAt,
+      goal: req.body.goal,
+      result: req.body.result,
+      userId: req.user._id,
+    });
+    await newPom.save();
+    res.redirect('pomodoros');
+  });
+//end quiz 3 #############
 
 app.get('/testing',
   myLogger,
   isLoggedIn,
-  (req,res) => {  res.render('testing')
-})
+  (req, res) => {
+    res.render('testing')
+  })
 
-app.get('/testing2',(req,res) => {
+app.get('/testing2', (req, res) => {
   res.render('testing2')
 })
 
 app.get('/profiles',
-    isLoggedIn,
-    async (req,res,next) => {
-      try {
-        res.locals.profiles = await User.find({})
-        res.render('profiles')
-      }
-      catch(e){
-        next(e)
-      }
+  isLoggedIn,
+  async (req, res, next) => {
+    try {
+      res.locals.profiles = await User.find({})
+      res.render('profiles')
     }
-  )
+    catch (e) {
+      next(e)
+    }
+  }
+)
 
 app.use('/publicprofile/:userId',
-    async (req,res,next) => {
-      try {
-        let userId = req.params.userId
-        res.locals.profile = await User.findOne({_id:userId})
-        res.render('publicprofile')
-      }
-      catch(e){
-        console.log("Error in /profile/userId:")
-        next(e)
-      }
+  async (req, res, next) => {
+    try {
+      let userId = req.params.userId
+      res.locals.profile = await User.findOne({ _id: userId })
+      res.render('publicprofile')
     }
+    catch (e) {
+      console.log("Error in /profile/userId:")
+      next(e)
+    }
+  }
 )
 
 
 app.get('/profile',
-    isLoggedIn,
-    (req,res) => {
-      res.render('profile')
-    })
+  isLoggedIn,
+  (req, res) => {
+    res.render('profile')
+  })
 
 app.get('/editProfile',
-    isLoggedIn,
-    (req,res) => res.render('editProfile'))
+  isLoggedIn,
+  (req, res) => res.render('editProfile'))
 
 app.post('/editProfile',
-    isLoggedIn,
-    async (req,res,next) => {
-      try {
-        let username = req.body.username
-        let age = req.body.age
-        req.user.username = username
-        req.user.age = age
-        req.user.imageURL = req.body.imageURL
-        await req.user.save()
-        res.redirect('/profile')
-      } catch (error) {
-        next(error)
-      }
+  isLoggedIn,
+  async (req, res, next) => {
+    try {
+      let username = req.body.username
+      let age = req.body.age
+      req.user.username = username
+      req.user.age = age
+      req.user.imageURL = req.body.imageURL
+      await req.user.save()
+      res.redirect('/profile')
+    } catch (error) {
+      next(error)
+    }
 
-    })
+  })
 
 
-app.use('/data',(req,res) => {
-  res.json([{a:1,b:2},{a:5,b:3}]);
+app.use('/data', (req, res) => {
+  res.json([{ a: 1, b: 2 }, { a: 5, b: 3 }]);
 })
 
 
 
-app.get("/test",async (req,res,next) => {
-  try{
+app.get("/test", async (req, res, next) => {
+  try {
     const u = await User.find({})
-    console.log("found u "+u)
-  }catch(e){
+    console.log("found u " + u)
+  } catch (e) {
     next(e)
   }
 
 })
 
-app.get("/apikey", async (req,res,next) => {
+app.get("/apikey", async (req, res, next) => {
   res.render('apikey')
 })
 
@@ -156,67 +180,67 @@ const APIKey = require('./models/APIKey')
 
 app.post("/apikey",
   isLoggedIn,
-  async (req,res,next) => {
+  async (req, res, next) => {
     const domainName = req.body.domainName
     const apikey = req.body.apikey
     const apikeydoc = new APIKey({
-      userId:req.user._id,
-      domainName:domainName,
-      apikey:apikey
+      userId: req.user._id,
+      domainName: domainName,
+      apikey: apikey
     })
     const result = await apikeydoc.save()
     console.log('result=')
     console.dir(result)
     res.redirect('/apikeys')
-})
+  })
 
 app.get('/apikeys', isLoggedIn,
-  async (req,res,next) => {
-    res.locals.apikeys = await APIKey.find({userId:req.user._id})
-    console.log('apikeys='+JSON.stringify(res.locals.apikeys.length))
+  async (req, res, next) => {
+    res.locals.apikeys = await APIKey.find({ userId: req.user._id })
+    console.log('apikeys=' + JSON.stringify(res.locals.apikeys.length))
     res.render('apikeys')
   })
 
 app.get('/allapikeys', isLoggedIn,
-    async (req,res,next) => {
-      res.locals.apikeys = await APIKey.find({})
-      console.log('apikeys='+JSON.stringify(res.locals.apikeys.length))
-      res.render('apikeys')
-    })
+  async (req, res, next) => {
+    res.locals.apikeys = await APIKey.find({})
+    console.log('apikeys=' + JSON.stringify(res.locals.apikeys.length))
+    res.render('apikeys')
+  })
 
 app.get('/apikeys/last/:N', isLoggedIn,
-    async (req,res,next) => {
-      const N = parseInt(req.params.N)
-      const apikeys = await APIKey.find({})
-      res.locals.apikeys = apikeys.slice(0,N)
-      console.log('apikeys='+JSON.stringify(res.locals.apikeys.length))
-      res.render('apikeys')
-    })
+  async (req, res, next) => {
+    const N = parseInt(req.params.N)
+    const apikeys = await APIKey.find({})
+    res.locals.apikeys = apikeys.slice(0, N)
+    console.log('apikeys=' + JSON.stringify(res.locals.apikeys.length))
+    res.render('apikeys')
+  })
 
 app.get('/apikeys/:domainName', isLoggedIn,
-    async (req,res,next) => {
-      res.locals.apikeys = await APIKey.find({domainName:req.params.domainName})
-      console.log('apikeys='+JSON.stringify(res.locals.apikeys.length))
-      res.render('apikeys')
-    })
+  async (req, res, next) => {
+    res.locals.apikeys = await APIKey.find({ domainName: req.params.domainName })
+    console.log('apikeys=' + JSON.stringify(res.locals.apikeys.length))
+    res.render('apikeys')
+  })
 
 app.get('/apikeyremove/:apikey_id', isLoggedIn,
-  async (req,res,next) => {
+  async (req, res, next) => {
 
     const apikey_id = req.params.apikey_id
     console.log(`id=${apikey_id}`)
-    await APIKey.deleteOne({_id:apikey_id})
+    await APIKey.deleteOne({ _id: apikey_id })
     res.redirect('/apikeys')
 
   })
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
